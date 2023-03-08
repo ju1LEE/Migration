@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/net/sf/json-lib/json-lib/2.4/json-lib-2.4-jdk15.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/org/apache/commons/commons-dbcp2/2.0/commons-dbcp2-2.0.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/org/apache/commons/commons-pool2/2.2/commons-pool2-2.2.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/org/slf4j/log4j-over-slf4j/1.7.7/log4j-over-slf4j-1.7.7.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/mysql/mysql-connector-java/5.1.31/mysql-connector-java-5.1.31.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/org/mariadb/jdbc/mariadb-java-client/1.1.7/mariadb-java-client-1.1.7.jar" sourcepath="C:/eGovFrame-3.5.1/maven/repository/org/mariadb/jdbc/mariadb-java-client/1.1.7/mariadb-java-client-1.1.7-sources.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/com/microsoft/sqlserver/sqljdbc4/4.2.0/sqljdbc4-4.2.0.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/localRepository/json/json-20160810.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/org/apache/logging/log4j/log4j-api/2.4.1/log4j-api-2.4.1.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/org/apache/logging/log4j/log4j-core/2.4.1/log4j-core-2.4.1.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/org/apache/logging/log4j/log4j-slf4j-impl/2.4.1/log4j-slf4j-impl-2.4.1.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/net/sf/ezmorph/ezmorph/1.0.6/ezmorph-1.0.6.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/commons-beanutils/commons-beanutils/1.8.0/commons-beanutils-1.8.0.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/commons-lang/commons-lang/2.5/commons-lang-2.5.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar"/>
+	<classpathentry kind="lib" path="C:/eGovFrame-3.5.1/maven/repository/commons-codec/commons-codec/1.10/commons-codec-1.10.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

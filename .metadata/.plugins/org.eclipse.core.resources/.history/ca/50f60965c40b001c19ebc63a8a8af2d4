@@ -1,0 +1,16 @@
+package egovframework.covision.coviflow.org;
+
+public class Main {
+
+	public static void main(String[] args) {
+		OrgUserMigration migration = new OrgUserMigration();
+		try {
+			//migration.setMap();
+			migration.executeDataMigration();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}

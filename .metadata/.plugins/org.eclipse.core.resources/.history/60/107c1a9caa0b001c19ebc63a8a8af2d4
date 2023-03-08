@@ -1,0 +1,8 @@
+package egovframework.covision.coviflow.migration;
+
+public class Snippet {
+	public static void main(String[] args) {
+		ConnectionFactoryMaria
+	}
+}
+

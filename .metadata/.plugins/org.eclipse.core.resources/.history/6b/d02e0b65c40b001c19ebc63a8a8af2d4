@@ -1,0 +1,116 @@
+package egovframework.covision.coviflow.org;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import egovframework.covision.coviflow.migration.ConnectionFactoryMS;
+
+public class OrgGroupMigration {
+
+	
+	public void executeDataMigration() throws IOException {
+		// TODO Auto-generated method stub
+		BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\yjlee\\Documents\\base_object_ur.txt"));
+		for(int i = 401 ;i<=701; i++){
+			String path = "000000000000000"+i;
+			path = path.substring(path.length()-15,path.length());
+			
+			String spQuery = "CALL BASE_OBJECT_GR_ADD_SP('";
+        	spQuery += "2','";
+        	spQuery += "Dept"+i+"','";
+        	spQuery += "1','";
+        	spQuery += "GENERAL','";//DN_Code
+        	spQuery += "Dept','"; //Group Type
+        	spQuery += "TEST_ROOT','";//MemberOf
+        	spQuery += "ORGROOT;GENERAL;TEST_ROOT;"+"Dept"+i+";','"; //GroupPath
+        	spQuery += "부서"+i+"',"; //Display Name
+        	spQuery += i+",'"; //SortKey
+        	spQuery += "000000000000000;000000000000001;000000000000100;"+path+";','";
+        	spQuery += "Y','"; //IsUse
+        	spQuery += "Y','"; //IsDisplay
+        	spQuery += "Y','"; //IsMail
+        	spQuery += "Y',";  //IsHR
+        	spQuery += "null,'";
+        	spQuery += "C',@Result);";
+        	
+        	//if(!rs.getString("GroupType").equals("Dept"))
+        	writer.write(spQuery);
+        	writer.newLine();
+        	System.out.println(spQuery);
+			//CALL BASE_OBJECT_GR_ADD_SP('2','RD01','1','GENERAL','Dept','RD','ORGROOT;GENERAL;RD;RD01;','연구1팀',1,'000000000000000;000000000000001;000000000101000;000000000000001;','Y','Y','Y','Y','dhkim','C',@Result);
+		}
+		
+		/* 
+		 * CALL BASE_OBJECT_GR_ADD_SP('1', 'test', '1', 'test', 'test', 'test', 'test', 'test', '1', 'test', 'Y','Y', 'Y', 'Y', null,'C', @RESULT);
+		 * 	DN_ID
+    		GR_Code
+    		DIC_ID
+    		DN_Code
+    		GroupType
+    		MemberOf
+    		GroupPath
+    		DisplayName
+    		SortKey
+    		SortPath
+    		_IsUse
+    		_IsDisplay
+    		_IsMail
+    		_IsHR
+    		_ManagerCode
+    		_DataStatus
+		*/
+		/*
+		try{
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs;
+			
+			conn = ConnectionFactoryMS.getDatabaseConnection();
+			
+			String query = "SELECT * FROM COVI_SMART..BASE_OBJECT_GR; ";
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+			  	
+			 
+	        while ( rs.next() ) {
+	        	String spQuery = "CALL BASE_OBJECT_GR_ADD_SP('";
+	        	spQuery += (rs.getInt("DN_ID")+1)+"','";
+	        	spQuery += rs.getString("GR_Code")+"','";
+	        	spQuery += "1','";
+	        	spQuery += rs.getString("DN_Code")+"','";
+	        	spQuery += rs.getString("GroupType")+"','";
+	        	spQuery += rs.getString("MemberOf")+"','";
+	        	spQuery += rs.getString("GroupPath")+"','";
+	        	spQuery += rs.getString("DisplayName")+"',";
+	        	spQuery += rs.getString("SortKey")+",'";
+	        	spQuery += rs.getString("SortPath")+"','";
+	        	spQuery += rs.getString("IsUse")+"','";
+	        	spQuery += rs.getString("IsDisplay")+"','";
+	        	spQuery += rs.getString("IsMail")+"','";
+	        	spQuery += rs.getString("IsHR")+"',";
+	        	if(rs.getString("ManagerCode")==null){
+	        		spQuery += "null,'";
+	        	}else{
+	        		spQuery += "'"+rs.getString("ManagerCode")+"','";
+	        	}
+	        	spQuery += "C',@Result);";
+	        	
+	        	if(!rs.getString("GroupType").equals("Dept"))
+	        	System.out.println(spQuery);
+	        }
+	        
+	        ps.close();
+			conn.close();
+			
+		} catch(Exception ex){
+			ex.printStackTrace();
+		}
+	*/
+	}
+
+}

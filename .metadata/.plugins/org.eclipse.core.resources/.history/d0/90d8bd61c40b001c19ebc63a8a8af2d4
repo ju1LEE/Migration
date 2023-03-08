@@ -1,0 +1,128 @@
+package egovframework.covision.coviflow.attachFileInfo;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import egovframework.covision.coviflow.attachFileInfo.ConnectionFactoryMaria;
+
+public class InsertNewData {
+	// select FormInstanceTable AttachFileInfo
+	public int selectFormInstanceTableCount() throws Exception{
+		int returnStr = 0;
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		conn = ConnectionFactoryMaria.getDatabaseConnection();
+		
+		String query = "select COUNT(*) from covi_approval4j.jwf_forminstance where AttachFileInfo != '';";
+		ps = conn.prepareStatement(query);
+        rs = ps.executeQuery();
+		
+        while ( rs.next() ) {
+        	returnStr = rs.getInt(1);
+        }
+        ps.close();
+		conn.close();
+        
+		return returnStr;
+	}
+
+	public JSONArray selectFormInstanceData(int startID) throws Exception {
+		JSONArray returnArr = new JSONArray();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		conn = ConnectionFactoryMaria.getDatabaseConnection();
+		
+		String query = "select FormInstID, AttachFileInfo from covi_approval4j.jwf_forminstance where AttachFileInfo != '' LIMIT "+startID+", 1000;";
+		ps = conn.prepareStatement(query);
+        rs = ps.executeQuery();
+		
+        while ( rs.next() ) {
+        	JSONObject returnObj = new JSONObject();
+        	
+        	returnObj.put("FormInstID", rs.getString("FormInstID"));
+        	returnObj.put("AttachFileInfo", rs.getString("AttachFileInfo"));
+        	
+        	returnArr.add(returnObj);
+        }
+        ps.close();
+		conn.close();
+        
+		return returnArr;
+	}
+
+	public void updateFormInstanceData(JSONObject formInstData) throws Exception{
+		String formInstID = formInstData.getString("FormInstID");
+		String attachFileInfo = formInstData.getString("AttachFileInfo");
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		
+		conn = ConnectionFactoryMaria.getDatabaseConnection();
+		String query = "update covi_approval4j.jwf_forminstance set AttachFileInfo = '"+attachFileInfo+"' where FormInstID = '"+formInstID+"'; ";
+		ps = conn.prepareStatement(query);
+		
+		ps.setEscapeProcessing(true);
+		ps.setQueryTimeout(100);
+		
+		ps.executeUpdate();
+		
+		ps.close();
+		conn.close();
+	}
+
+	public JSONArray selectFormHistory() throws Exception{
+		JSONArray returnArr = new JSONArray();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		conn = ConnectionFactoryMaria.getDatabaseConnection();
+		
+		String query = "select FormHistoryID, ModValue from covi_approval4j.jwf_formhistory where FieldName IN ('FileInfos', 'AttachFileInfo') AND ModValue != '';";
+		ps = conn.prepareStatement(query);
+        rs = ps.executeQuery();
+		
+        while ( rs.next() ) {
+        	JSONObject returnObj = new JSONObject();
+        	
+        	returnObj.put("FormHistoryID", rs.getString("FormHistoryID"));
+        	returnObj.put("AttachFileInfo", rs.getString("ModValue"));
+        	
+        	returnArr.add(returnObj);
+        }
+        ps.close();
+		conn.close();
+        
+		return returnArr;
+	}
+
+	public void updateFormHistoryData(JSONObject formHistoryData)  throws Exception{
+		String formHistoryID = formHistoryData.getString("FormHistoryID");
+		String attachFileInfo = formHistoryData.getString("AttachFileInfo");
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		
+		conn = ConnectionFactoryMaria.getDatabaseConnection();
+		String query = "update covi_approval4j.jwf_formhistory set ModValue = '"+attachFileInfo+"' where FormHistoryID = '"+formHistoryID+"'; ";
+		ps = conn.prepareStatement(query);
+		
+		ps.setEscapeProcessing(true);
+		ps.setQueryTimeout(100);
+		
+		ps.executeUpdate();
+		
+		ps.close();
+		conn.close();
+	}
+}

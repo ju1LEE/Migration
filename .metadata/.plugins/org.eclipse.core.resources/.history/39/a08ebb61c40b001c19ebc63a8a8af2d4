@@ -1,0 +1,50 @@
+package egovframework.covision.coviflow.attachFileInfo;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import egovframework.covision.coviflow.attachFileInfo.InsertNewData;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+public class DataMigrationMain {
+	
+	private InsertNewData newDataSvc;
+	private JSONArray FormInstArr = new JSONArray();
+	private JSONArray FormHistoryArr = new JSONArray();
+	
+	public void executeDataMigration() throws Exception {
+		newDataSvc = new InsertNewData();
+		
+		int allCount = newDataSvc.selectFormInstanceTableCount();
+		for(int i=0; i<=(allCount/1000)*1000; i+=1000){
+			int startID = 0;
+			
+			startID = i;
+			
+			FormInstArr = newDataSvc.selectFormInstanceData(startID);
+			
+			for(Object obj : FormInstArr){
+				JSONObject formInstData = (JSONObject) obj;
+				
+				formInstData.put("AttachFileInfo", new String(Base64.encodeBase64(formInstData.get("AttachFileInfo").toString().getBytes())));
+				
+				newDataSvc.updateFormInstanceData(formInstData);
+			}
+		}
+		
+		FormHistoryArr = newDataSvc.selectFormHistory();
+		for(Object obj : FormHistoryArr){
+			JSONObject formHistoryData = (JSONObject) obj;
+			
+			formHistoryData.put("AttachFileInfo", new String(Base64.encodeBase64(formHistoryData.get("AttachFileInfo").toString().getBytes())));
+			
+			newDataSvc.updateFormHistoryData(formHistoryData);
+		}
+		
+	}
+}

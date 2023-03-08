@@ -1,0 +1,71 @@
+package egovframework.covision.coviflow.vacation;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import egovframework.covision.coviflow.vacation.ConnectionFactoryMaria;
+import egovframework.covision.coviflow.vacation.ConnectionFactoryMS;
+
+public class InsertNewData {
+
+	public JSONArray selectUseagePlan() throws Exception{
+		JSONArray returnArr = new JSONArray();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		conn = ConnectionFactoryMS.getDatabaseConnection();
+		
+		String query = "SELECT [GR_CODE] ,[GR_NAME] ,[UR_CODE] ,[UR_NAME] ,[YEAR] ,[VACPLAN] ,[BIGO] ,[INSERT_DATE] FROM [COVI_FLOW_SI].[dbo].[VM_USEAGE_PLAN] ORDER BY GR_Code, UR_Code";
+		
+		ps = conn.prepareStatement(query);
+		rs = ps.executeQuery();
+		
+        while ( rs.next() ) {
+        	JSONObject formInstData = new JSONObject();
+        	formInstData.put("GR_CODE", rs.getString("GR_CODE"));
+        	formInstData.put("GR_NAME", rs.getString("GR_NAME"));
+        	formInstData.put("UR_CODE", rs.getString("UR_CODE"));
+        	formInstData.put("UR_NAME", rs.getString("UR_NAME"));
+        	formInstData.put("YEAR", rs.getString("YEAR"));
+        	formInstData.put("VACPLAN", rs.getString("VACPLAN"));
+        	formInstData.put("INSERT_DATE", rs.getString("INSERT_DATE"));
+        	
+        	returnArr.add(formInstData);
+        }
+        ps.close();
+		conn.close();
+        
+		return returnArr;
+	}
+
+	public void insertUseagePlan(JSONObject useagePlan) throws Exception{
+		String grCode = useagePlan.getString("GR_CODE");
+		String grName = useagePlan.getString("GR_NAME");
+		String urCode = useagePlan.getString("UR_CODE");
+		String urName = useagePlan.getString("UR_NAME");
+		String year = useagePlan.getString("YEAR");
+		String vacPlan = useagePlan.getString("VACPLAN");
+		String inserDate = useagePlan.getString("INSERT_DATE");
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		
+		conn = ConnectionFactoryMaria.getDatabaseConnection();
+		String query = "INSERT INTO covi_smart4j.`vm_useage_plan` (`GR_CODE`, `GR_NAME`, `UR_CODE`, `UR_NAME`, `YEAR`, `VACPLAN`, `INSERT_DATE`) VALUES ('"+grCode+"', '"+grName+"', '"+urCode+"', '"+urName+"', '"+year+"', '"+vacPlan+"', '"+inserDate+"');";
+		ps = conn.prepareStatement(query);
+		
+		ps.setEscapeProcessing(true);
+		ps.setQueryTimeout(100);
+		
+		ps.executeUpdate();
+		
+		ps.close();
+		conn.close();
+		
+	}
+}

@@ -1,0 +1,276 @@
+package egovframework.covision.coviflow.migration;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+public class SelectOldData {
+	
+	// 기존 FormInstance 개수 세기
+	public int selectOldFormInstanceDataCount() throws Exception{
+		int result = 0;
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		try {
+			conn = ConnectionFactoryMS.getDatabaseConnection();
+			
+			String query = "SELECT COUNT(*) AS CNT FROM (SELECT * FROM COVI_FLOW_FORM_INST.dbo.WF_FORM_INSTANCE WHERE COMPLETED_DATE IS NOT NULL AND COMPLETED_DATE != '' AND DELETED IS NULL) AS A;";
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	result = rs.getInt("CNT");
+	        }
+		} catch (Exception e) {
+			throw new Exception(e.getMessage());
+		} finally {
+	        ps.close();
+			conn.close();
+		}
+		
+		return result;
+	}
+	
+	// 기존 FormInstance 데이터 가져오기
+	public JSONArray selectOldFormInstanceData(int startID, int endID) throws Exception{
+		JSONArray returnArr = new JSONArray();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+
+		try {
+			conn = ConnectionFactoryMS.getDatabaseConnection();
+			
+			String query = "SELECT * FROM (SELECT ROW_NUMBER() OVER (ORDER BY COMPLETED_DATE) AS NUM, * FROM COVI_FLOW_FORM_INST.dbo.WF_FORM_INSTANCE WHERE COMPLETED_DATE IS NOT NULL AND COMPLETED_DATE != '' AND DELETED IS NULL AND FORM_INST_ID = '453C25E1-8B45-45C7-8CA4-13A851073E3F') AS A";
+			query += " WHERE A.NUM BETWEEN "+ String.valueOf(startID) +" AND "+String.valueOf(endID)+" ";
+			query += " ORDER BY A.COMPLETED_DATE;";
+			
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	JSONObject formInstData = new JSONObject();
+	        	formInstData.put("FormInstID", rs.getString("FORM_INST_ID"));
+	        	formInstData.put("ProcessID", rs.getString("PROCESS_ID"));
+	        	formInstData.put("SchemaID", rs.getString("SCHEMA_ID"));
+	        	formInstData.put("FormID", rs.getString("FORM_ID"));
+	        	formInstData.put("Subject", rs.getString("SUBJECT").replace("\\", "\\\\").replace("'", "\\'"));
+	        	formInstData.put("InitiatorID", rs.getString("INITIATOR_ID"));
+	        	formInstData.put("InitiatorName", rs.getString("INITIATOR_NAME"));
+	        	formInstData.put("InitiatorUnitID", rs.getString("INITIATOR_OU_ID"));
+	        	formInstData.put("InitiatorUnitName", rs.getString("INITIATOR_OU_NAME"));
+	        	formInstData.put("InitiatedDate", rs.getString("INITIATED_DATE"));
+	        	formInstData.put("CompletedDate", rs.getString("COMPLETED_DATE"));
+	        	formInstData.put("DeletedDate", rs.getString("DELETED"));
+	        	formInstData.put("LastModifiedDate", rs.getString("LAST_MODIFIED_DATE"));
+	        	formInstData.put("LastModifierID", rs.getString("LAST_MODIFIER_ID"));
+	        	formInstData.put("EntCode", rs.getString("ENT_CODE"));
+	        	formInstData.put("EntName", rs.getString("ENT_NAME"));
+	        	formInstData.put("DocNo", rs.getString("DOC_NO"));
+	        	formInstData.put("DocLevel", rs.getString("DOC_LEVEL"));
+	        	formInstData.put("DocClassID", rs.getString("DOC_CLASS_ID"));
+	        	formInstData.put("DocClassName", rs.getString("DOC_CLASS_NAME"));
+	        	formInstData.put("DocSummary", rs.getString("DOC_SUMMARY"));
+	        	formInstData.put("IsPublic", rs.getString("ISPUBLIC"));
+	        	formInstData.put("SaveTerm", rs.getString("SAVE_TERM"));
+	        	formInstData.put("AttachFileInfo", rs.getString("ATTACH_FILE_INFO"));
+	        	formInstData.put("AppliedDate", rs.getString("APPLIED"));
+	        	formInstData.put("AppliedTerm", rs.getString("APPLIED_TERM"));
+	        	formInstData.put("ReceiveNo", rs.getString("RECEIVE_NO"));
+	        	formInstData.put("ReceiveNames", rs.getString("RECEIVE_NAMES"));
+	        	formInstData.put("ReceiptList", rs.getString("RECEIPT_LIST"));
+	        	formInstData.put("BodyType", rs.getString("BODY_TYPE"));
+	        	formInstData.put("BodyContext", rs.getString("BODY_CONTEXT"));
+	        	formInstData.put("DocLinks", rs.getString("DOCLINKS")!=null?rs.getString("DOCLINKS").replace("'", "\\'") : "");
+	        	
+	        	returnArr.add(formInstData);
+	        }
+		} catch (Exception e) {
+			throw new Exception(e.getMessage());
+		} finally {
+	        ps.close();
+			conn.close();
+		}
+        
+		return returnArr;
+	}
+	
+	// 기존 Process 데이터 가져오기
+	public JSONArray selectOldProcessData(String oldFormInstID) throws Exception{
+		JSONArray returnArr = new JSONArray();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		try {
+			conn = ConnectionFactoryMS.getDatabaseConnection();
+			
+			String query = "SELECT * FROM COVI_FLOW_INST_ARCHIVE.dbo.WF_E_PROCESS WHERE FORM_INST_ID = '"+oldFormInstID+"' ORDER BY STARTED; ";
+			ps = conn.prepareStatement(query);
+	        rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	JSONObject processData = new JSONObject();
+	        	processData.put("ProcessArchiveID", rs.getString("PROCESS_ID"));
+	        	processData.put("ProcessKind", "0");
+	        	processData.put("ParentProcessID", rs.getString("PARENT_PROCESS_ID"));
+	        	processData.put("ProcessDescriptionArchiveID", "");										// 추후 세팅
+	        	processData.put("ProcessName", rs.getString("NAME"));
+	        	processData.put("DocSubject", rs.getString("PROCESS_SUBJECT").replace("'", "\\'"));
+	        	processData.put("BusinessState", rs.getString("BUSINESS_STATE")!=null ? rs.getString("BUSINESS_STATE") : "02_01_01");
+	        	processData.put("InitiatorID", rs.getString("INITIATOR_ID"));
+	        	processData.put("InitiatorName", rs.getString("INITIATOR_NAME"));
+	        	processData.put("InitiatorUnitID", rs.getString("INITIATOR_UNIT_ID"));
+	        	processData.put("InitiatorUnitName", rs.getString("INITIATOR_UNIT_NAME"));
+	        	processData.put("FormInstID", rs.getString("FORM_INST_ID"));
+	        	processData.put("ProcessState", "528");
+	        	processData.put("InitiatorSIPAddress", rs.getString("INITIATOR_SIPADDRESS"));
+	        	processData.put("StartDate", rs.getString("STARTED"));
+	        	processData.put("EndDate", rs.getString("FINISHED"));
+	        	processData.put("DeleteDate", rs.getString("DELETED"));
+	        	processData.put("FormName", rs.getString("FORM_NAME"));
+	        	processData.put("FormPrefix", "WF_MIGRATION");
+	        	processData.put("DivisionKind", rs.getString("DIVISION_KIND"));
+	        	processData.put("DocFolder", rs.getString("DOC_FOLDER"));
+	        	processData.put("DocFolderName", rs.getString("DOC_FOLDER_NAME"));
+	        	processData.put("OwnerUnitID", rs.getString("OWNER_UNIT_ID"));
+	        	processData.put("EntCode", rs.getString("ENT_CODE"));
+	        	processData.put("Inserted", rs.getString("INSERTED"));
+	        	processData.put("SaveTermExpired", rs.getString("SAVE_TERM_EXPIRED"));
+	        	processData.put("DSCR", rs.getString("DSCR"));
+	        	processData.put("IsSecureDoc", rs.getString("SECURE_DOC"));
+	        	processData.put("FileExt", rs.getString("FILE_EXT"));
+	        	processData.put("DocNo", rs.getString("DOC_NUMBER"));
+	        	processData.put("ApproverCode", rs.getString("APPROVER_CODE"));
+	        	processData.put("ApproverName", rs.getString("APPROVER_NAME"));
+	        	processData.put("ApprovalStep", rs.getString("BUSINESS_DATA1"));
+	        	processData.put("ApproverSIPAddress", rs.getString("APPROVER_SIPADDRESS"));
+	        	processData.put("Priority", rs.getString("PRIORITY"));
+	        	processData.put("IsModify", rs.getString("BUSINESS_DATA6")!=null && rs.getString("BUSINESS_DATA6").equals("MODIFY") ? "Y" : "N");
+	        	processData.put("Reserved1", rs.getString("PROCESS_ID"));
+	        	processData.put("Reserved2", rs.getString("PARENT_PROCESS_ID"));
+	        	processData.put("BusinessData1", rs.getString("PDEF_ID"));
+	        	
+	        	returnArr.add(processData);
+	        }
+		} catch (Exception e) {
+			throw new Exception(e.getMessage());
+		} finally {
+	        ps.close();
+			conn.close();
+		}
+        
+		return returnArr;
+	}
+	
+	// 기존 Workitem 데이터 가져오기
+	public JSONArray selectOldWorkitemData(String oldProcessID) throws Exception{
+		JSONArray returnArr = new JSONArray();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		try {
+			conn = ConnectionFactoryMS.getDatabaseConnection();
+			
+			String query = "SELECT * FROM COVI_FLOW_INST_ARCHIVE.dbo.WF_E_WORKITEM WHERE PROCESS_ID = '"+oldProcessID+"' ORDER BY CREATED; ";
+			ps = conn.prepareStatement(query);
+	        rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	JSONObject workitemData = new JSONObject();
+	        	workitemData.put("WorkItemArchiveID", rs.getString("WORKITEM_ID"));
+	        	workitemData.put("PerformerID", "0");
+	        	workitemData.put("TaskID", "");
+	        	workitemData.put("ProcessArchiveID", rs.getString("PROCESS_ID"));
+	        	workitemData.put("WorkItemDescriptionArchiveID", "0");
+	        	workitemData.put("UserCode", rs.getString("PERFORMER_ID"));
+	        	workitemData.put("UserName", rs.getString("PERFORMER_NAME"));
+	        	workitemData.put("DeputyID", rs.getString("DEPUTY_ID"));
+	        	workitemData.put("DeputyName", rs.getString("DEPUTY_NAME"));
+	        	workitemData.put("Created", rs.getString("CREATED"));
+	        	workitemData.put("FinishRequested", rs.getString("FINISH_REQUESTED"));
+	        	workitemData.put("Finished", rs.getString("FINISHED"));
+	        	workitemData.put("Deleted", rs.getString("DELETED"));
+	        	workitemData.put("ActualKind", rs.getString("ACTUAL_KIND"));
+	        	workitemData.put("SubKind", rs.getString("SUB_KIND"));
+	        	workitemData.put("IsBatch", rs.getString("IS_BATCH"));
+	        	workitemData.put("IsMobile", rs.getString("IS_MOBILE"));
+	        	workitemData.put("Charge", rs.getString("BUSINESS_DATA3"));
+	        	workitemData.put("PIDeleted", rs.getString("PI_DELETED"));
+	        	workitemData.put("PIBusinessState", rs.getString("PI_BUSINESS_STATE"));
+	        	workitemData.put("PIFinished", rs.getString("PI_FINISHED"));
+	        	
+	        	returnArr.add(workitemData);
+	        }
+		} catch (Exception e) {
+			throw new Exception(e.getMessage());
+		} finally {
+	        ps.close();
+			conn.close();
+		}
+        
+		return returnArr;
+	}
+	
+	// 기존 Circulation 데이터 가져오기
+	public JSONArray selectOldCirculationBoxData(String oldProcessID) throws Exception{
+		JSONArray returnArr = new JSONArray();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+
+		try {
+			conn = ConnectionFactoryMS.getDatabaseConnection();
+			
+			String query = "SELECT * FROM COVI_FLOW_FORM_DEF.dbo.WF_CIRCULATION WHERE PROCESS_ID = '"+oldProcessID+"'; ";
+			ps = conn.prepareStatement(query);
+	        rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	JSONObject circulationData = new JSONObject();
+	        	circulationData.put("CirculationBoxID", rs.getString("CIRCULATION_ID"));
+	        	circulationData.put("ProcessID", rs.getString("PROCESS_ID"));
+	        	circulationData.put("CirculationBoxDescriptionID", "");									// 추후 세팅
+	        	circulationData.put("FormInstID", rs.getString("FORM_INST_ID"));
+	        	circulationData.put("ReceiptID", rs.getString("RECEIPT_ID"));
+	        	circulationData.put("ReceiptType", rs.getString("RECEIPT_TYPE"));
+	        	circulationData.put("ReceiptName", rs.getString("RECEIPT_NAME"));
+	        	circulationData.put("ReceiptDate", rs.getString("RECEIPT_DATE"));
+	        	circulationData.put("Kind", rs.getString("KIND"));
+	        	circulationData.put("State", rs.getString("STATE"));
+	        	circulationData.put("ReadDate", rs.getString("READ_DATE"));
+	        	circulationData.put("SenderID", rs.getString("SENDER_ID"));
+	        	circulationData.put("SenderName", rs.getString("SENDER_NAME"));
+	        	circulationData.put("Subject", rs.getString("SUBJECT").replace("'", "\\'"));
+	        	circulationData.put("Comment", rs.getString("COMMENT"));
+	        	circulationData.put("DeletedDate", rs.getString("DELETED_DATE"));
+	        	circulationData.put("DataState", rs.getString("DELETED_DATE") == null ? "C" : "D");
+	        	circulationData.put("RegID", rs.getString("SENDER_ID"));
+	        	circulationData.put("RegDate", rs.getString("RECEIPT_DATE"));
+	        	circulationData.put("ModID", rs.getString("SENDER_ID"));
+	        	circulationData.put("ModDate", rs.getString("RECEIPT_DATE"));
+	        	circulationData.put("LINK_URL", rs.getString("LINK_URL"));
+	        	
+	        	returnArr.add(circulationData);
+	        }
+		} catch (Exception e) {
+			throw new Exception(e.getMessage());
+		} finally {
+	        ps.close();
+			conn.close();
+		}
+        
+		return returnArr;
+	}
+}

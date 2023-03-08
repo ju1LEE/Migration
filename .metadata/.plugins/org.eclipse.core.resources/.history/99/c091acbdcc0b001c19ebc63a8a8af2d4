@@ -1,0 +1,70 @@
+package egovframework.covision.coviflow.migration;
+
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.codec.binary.Base64;
+import org.json.XML;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import net.sf.json.JSONObject;
+
+public class MigrationProcess {
+	
+	Map<String, String> processIDMap;
+	
+	public MigrationProcess() throws Exception {
+		this.processIDMap = new HashMap<String, String>();
+		
+		InsertNewData newDataSvc = new InsertNewData();
+		this.processIDMap = newDataSvc.selectProcessIDMappingData();
+		
+		Set key = processIDMap.keySet();
+		String keyName = "";
+		
+		for (Iterator iterator = key.iterator(); iterator.hasNext();) {
+			keyName = (String) iterator.next();
+		}
+	}
+	
+	// DSCR Data를 xml에서 json으로 변환
+	public String getDSCRString(String DSCR, String key){
+		String returnData = "";
+		JSONObject dscrObj = new JSONObject();
+		org.json.JSONObject dscrObjTemp = new org.json.JSONObject();
+		
+		dscrObjTemp = XML.toJSONObject(DSCR);
+		dscrObj = JSONObject.fromObject(dscrObjTemp.toString());
+		dscrObj = dscrObj.getJSONObject("ClientAppInfo").getJSONObject("App").getJSONObject("forminfos").getJSONObject("forminfo");
+		
+		if(dscrObj.has(key)){
+			returnData = dscrObj.getString(key);
+		}else{
+			if(key.equals("reserved_time")){
+				returnData = null;
+			}
+		}
+		
+		return returnData;
+	}
+
+}

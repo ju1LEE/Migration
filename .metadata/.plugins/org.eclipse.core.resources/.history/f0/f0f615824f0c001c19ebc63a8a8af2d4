@@ -1,0 +1,32 @@
+package egovframework.covision.coviflow.migration;
+
+import org.json.XML;
+import net.sf.json.JSONObject;
+
+public class MigrationProcess {
+	
+	public MigrationProcess() throws Exception {
+		
+	}
+	
+	// DSCR Data를 xml에서 json으로 변환
+	public String getDSCRString(String DSCR, String key){
+		String returnData = "";
+		JSONObject dscrObj = new JSONObject();
+		org.json.JSONObject dscrObjTemp = new org.json.JSONObject();
+		
+		dscrObjTemp = XML.toJSONObject(DSCR);
+		dscrObj = JSONObject.fromObject(dscrObjTemp.toString());
+		dscrObj = dscrObj.getJSONObject("ClientAppInfo").getJSONObject("App").getJSONObject("forminfos").getJSONObject("forminfo");
+		
+		if(dscrObj.has(key)){
+			returnData = dscrObj.getString(key);
+		}else{
+			if(key.equals("reserved_time")){
+				returnData = null;
+			}
+		}
+		
+		return returnData;
+	}
+}

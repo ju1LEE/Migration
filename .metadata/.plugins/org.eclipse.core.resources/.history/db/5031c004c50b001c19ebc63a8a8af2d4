@@ -1,0 +1,236 @@
+package egovframework.covision.coviflow.migration;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.apache.commons.codec.binary.Base64;
+import org.json.XML;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+public class MigrationFormInstance {
+	
+	Map<String, String> oldSchemaMap; 		//.NET 양식 스키마 매핑 Map (key: SCHEMA_ID, value: SCHEMA_NAME)
+	Map<String, Integer> newSchemaMap; 		//JAVA 양식 스키마 매핑 Map (key: SchemaName, value: SchemaID)
+	Map<String, String> oldFormMap; 			//.NET 양식 매핑 Map (key: FORM_ID, value: FORM_PREFIX)
+	Map<String, Integer> newFormMap; 			//JAVA 양식 매핑 Map (key: FormPrefix, value: FormID)
+	
+	public String getSchemaID(String oldSchemaID) {
+		String schemaName = oldSchemaMap.get(oldSchemaID);
+		String returnStr = "0";
+		
+		if(newSchemaMap.get(schemaName) != null){
+			returnStr = newSchemaMap.get(schemaName).toString();
+		}
+		
+		return returnStr;
+	}
+	
+	public String getFormID(String oldFormID) {
+		String formPrefix = oldFormMap.get(oldFormID);
+		String returnStr = "0";
+		
+		if(newFormMap.get(formPrefix) != null){
+			returnStr = newFormMap.get(formPrefix).toString();
+		}
+		
+		return returnStr;
+	}
+	
+	public String getDocClassID(String oldDocClassID){
+		return oldDocClassID;
+	}
+	
+	public String makeAttachFileInfo(String oldAttachFileInfo) {
+		String returnStr = "";
+		
+		if(!oldAttachFileInfo.equals("")){
+			JSONObject returnObj = new JSONObject();
+			JSONArray returnArr = new JSONArray();
+			
+			JSONObject oldAttachFilesObj = new JSONObject();
+			org.json.JSONObject oldAttachFileObjTemp = new org.json.JSONObject();
+			
+			oldAttachFileObjTemp = XML.toJSONObject(oldAttachFileInfo);
+			oldAttachFilesObj = JSONObject.fromObject(oldAttachFileObjTemp.toString());
+			
+			JSONArray oldAttachFilesArr = new JSONArray();
+			if(oldAttachFilesObj.get("fileinfos") instanceof JSONObject && oldAttachFilesObj.getJSONObject("fileinfos").has("fileinfo") && oldAttachFilesObj.getJSONObject("fileinfos").getJSONObject("fileinfo").has("file")){
+				if(oldAttachFilesObj.getJSONObject("fileinfos").getJSONObject("fileinfo").get("file") instanceof JSONObject)
+					oldAttachFilesArr.add(oldAttachFilesObj.getJSONObject("fileinfos").getJSONObject("fileinfo").getJSONObject("file"));
+				else
+					oldAttachFilesArr = oldAttachFilesObj.getJSONObject("fileinfos").getJSONObject("fileinfo").getJSONArray("file");
+			}
+			
+			int cnt = 0;
+			for(Object obj : oldAttachFilesArr){
+				JSONObject oldAttachFileObj = new JSONObject();
+				oldAttachFileObj = (JSONObject) obj;
+				
+				String savedName = oldAttachFileObj.getString("location").replaceAll("/GWStorage/e-sign/Approval/Attach/", "").split("/")[1];
+				
+				returnObj.put("ID", "migration_" + Integer.toString(cnt));
+				returnObj.put("FileName", oldAttachFileObj.getString("name"));
+				returnObj.put("Type", oldAttachFileObj.getString("state"));
+				returnObj.put("FilePath", oldAttachFileObj.getString("location").replaceAll("/GWStorage/e-sign/Approval/Attach/", "").split("/")[0]+"/");
+				returnObj.put("SavedName", savedName);
+				returnObj.put("Size", oldAttachFileObj.getString("size"));
+				returnObj.put("Extention", savedName.split("\\.")[savedName.split("\\.").length-1]);
+				returnObj.put("RegisterCode", oldAttachFileObj.getString("user_name").substring(0, oldAttachFileObj.getString("user_name").indexOf("^")));
+				
+				returnArr.add(returnObj);
+				
+				++cnt;
+			}
+			
+			returnStr = "{ \"FileInfos\" : " + returnArr.toString().replace("'", "\\\'") + "}";
+		}
+		
+		returnStr = new String(Base64.encodeBase64(returnStr.getBytes()));
+		
+		return returnStr;			// 첨부파일 Base64 암호화 처리
+	}
+	
+	public String makeBodyContext(String oldBodyContext) {
+		String returnStr = "";
+		JSONObject returnObj = new JSONObject();
+		
+		JSONObject oldBodyContextObj = new JSONObject();
+		org.json.JSONObject oldBodyContextObjTemp = new org.json.JSONObject();
+		
+		oldBodyContextObjTemp = XML.toJSONObject(oldBodyContext);
+		oldBodyContextObj = JSONObject.fromObject(oldBodyContextObjTemp.toString()).getJSONObject("BODY_CONTEXT");
+		
+		Iterator<?> keys = oldBodyContextObj.keys();
+
+		while(keys.hasNext()){
+			String key = (String) keys.next();
+			
+			if(key.equals("INITIATOR_DP")){
+				returnObj.put("InitiatorDisplay", oldBodyContextObj.getString("INITIATOR_DP"));
+			}
+			else if(key.equals("INITIATOR_CODE_DP")){
+				returnObj.put("InitiatorCodeDisplay", oldBodyContextObj.getString("INITIATOR_CODE_DP"));
+			}
+			else if(key.equals("INITIATOR_OU_DP")){
+				returnObj.put("InitiatorOUDisplay", oldBodyContextObj.getString("INITIATOR_OU_DP"));
+			}
+			else if(key.equals("INITIATED_DATE")){
+				returnObj.put("InitiatedDate", oldBodyContextObj.getString("INITIATED_DATE"));
+			}
+			else{
+				returnObj.put(key, oldBodyContextObj.getString(key));
+			}
+		}
+		
+		returnStr = returnObj.toString();
+		returnStr = new String(Base64.encodeBase64(returnStr.getBytes()));
+		
+		return returnStr;
+	}
+	
+	public void getFormSchemaMap() throws SQLException{
+		getOldSchemaMap();
+		getNewSchemaMap();
+		getOldFormMap();
+		getNewFormMap();
+	}
+	
+	public void getOldSchemaMap() throws SQLException{
+		Map<String, String> msFormShemaMap = new HashMap<String, String>();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		conn = ConnectionFactoryMS.getDatabaseConnection();
+		
+		String query = "SELECT SCHEMA_ID, SCHEMA_NAME FROM COVI_FLOW_FORM_DEF.dbo.WF_FORMS_SCHEMA;";
+		ps = conn.prepareStatement(query);
+        rs = ps.executeQuery();
+		
+        while ( rs.next() ) {
+        	msFormShemaMap.put(rs.getString("SCHEMA_ID"), rs.getString("SCHEMA_NAME"));
+        }
+        
+        ps.close();
+		conn.close();
+		
+		this.oldSchemaMap = msFormShemaMap;
+	}
+	
+	public void getNewSchemaMap() throws SQLException {
+		Map<String, Integer> javaFormShemaMap = new HashMap<String, Integer>();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		conn = ConnectionFactoryMaria.getDatabaseConnection();
+		
+		String query = "SELECT SchemaID, SchemaName FROM covi_approval4j.jwf_formsschema;";
+		ps = conn.prepareStatement(query);
+        rs = ps.executeQuery();
+		
+        while ( rs.next() ) {
+        	javaFormShemaMap.put(rs.getString("SchemaName"), rs.getInt("SchemaID"));
+        }
+        
+        ps.close();
+		conn.close();
+		
+		this.newSchemaMap = javaFormShemaMap;
+	}
+	
+	public void getOldFormMap() throws SQLException{
+		Map<String, String> msFormMap = new HashMap<String, String>();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		conn = ConnectionFactoryMS.getDatabaseConnection();
+		
+		String query = "SELECT FORM_ID, FORM_PREFIX, REVISION FROM COVI_FLOW_FORM_DEF.dbo.WF_FORMS";
+		ps = conn.prepareStatement(query);
+        rs = ps.executeQuery();
+		
+        while ( rs.next() ) {
+        	msFormMap.put(rs.getString("FORM_ID"), rs.getString("FORM_PREFIX")+"_"+rs.getString("REVISION"));
+        }
+        
+        ps.close();
+		conn.close();
+		
+		this.oldFormMap = msFormMap;
+	}
+	
+	public void getNewFormMap() throws SQLException {
+		Map<String, Integer> javaFormMap = new HashMap<String, Integer>();
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs;
+		
+		conn = ConnectionFactoryMaria.getDatabaseConnection();
+		
+		String query = "SELECT FormID, FormPrefix, Revision FROM covi_approval4j.jwf_forms;";
+		ps = conn.prepareStatement(query);
+        rs = ps.executeQuery();
+		
+        while ( rs.next() ) {
+        	javaFormMap.put(rs.getString("FormPrefix")+"_"+rs.getString("Revision"), rs.getInt("FormID"));
+        }
+        
+        ps.close();
+		conn.close();
+		
+		this.newFormMap = javaFormMap;
+	}
+}

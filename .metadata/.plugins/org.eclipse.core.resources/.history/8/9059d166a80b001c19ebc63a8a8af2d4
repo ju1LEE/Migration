@@ -1,0 +1,342 @@
+package egovframework.covision.coviflow.org;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.json.XML;
+
+import net.sf.json.JSONObject;
+import egovframework.covision.coviflow.migration.ConnectionFactoryMS;
+import egovframework.covision.coviflow.migration.ConnectionFactoryMaria;
+
+public class OrgUserMigration {
+
+	private Map<String, Integer> Dept; 		
+	private Map<String, Integer> jobTitle; 		
+	private Map<String, Integer> jobPosition; 		
+	private Map<String, Integer> jobLevel; 	
+	private Map<String, Integer> region; 	
+
+	public void executeDataMigration() {
+		
+	/*	for(int i = 1 ;i<=200; i++){
+			String insQuery ="call BASE_OBJECT_UR_ADD_SP_COMMON(";
+        	insQuery +="'test"+i+"'";
+        	insQuery +=",'테스트계정"+i+"'";
+        	insQuery +=",'test"+i+"'";
+        	insQuery +=",'1'";
+        	insQuery +=",2";
+        	insQuery +=",'test"+i+"'"; //_EmpNo
+        	
+        	insQuery +=","+(67+i); //DEPT_ID       	
+        	insQuery +=",0";             	
+        	insQuery +=",0"; //approvalID
+        	
+        	insQuery +=",14"; //JobPosition
+        	
+        	insQuery +=",11";
+        	
+        	insQuery +=",14";
+        	
+        	insQuery +=",0"; //DeputyID
+        	
+        	insQuery +=",'Y'";
+        	insQuery +=",'Y'";
+        	insQuery +=",'2017-04-14'";
+        	insQuery +=",''";
+        	insQuery +=",'L'";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",'ko'";
+        	insQuery +=",'테스트계정/사원/팀원'";
+        	insQuery +=",'C'"; //DataStatus
+        	//insQuery +=",'"+rs.getString("RegistDate")+"'";//RegistDate
+        	insQuery +=",''";//DeputyCode
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	
+        	insQuery +=",''";
+        	insQuery +=",''"; //ApprovalName
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",''";
+        	insQuery +=",@Return);";
+        	
+        	System.out.println(insQuery);
+		}*/
+		
+		//call BASE_OBJECT_UR_ADD_SP_COMMON('ahyoung.Kim','김아영','ahyoung.Kim','tCfv1k3D/jsZYJDjc8X6Yw==',2,'ahyoung.Kim',1,0,0,8,11,8,0,'N','N','2010-04-05','','S','19740801','','','010-9111-3436','LANGUA0001','김아영[Ah-Young Kim]/팀원/차장','C','2013-01-16 10:57:18.653','','','','','N','','UNIT9999','',' ','{"mailconfig":{"APPROVAL":"MAIL;","APPROVECANCEL":"","ABORT":"MAIL;","COMPLETE":"MAIL;","WITHDRAW":"","REJECT":"MAIL;","CIRCULATION":"MAIL;","CCINFO":"MAIL;"}}',' ','','UNIT9999','UNIT9999','','','LyOM3rPbx6Q=','N','N',' ',@Return);
+		//call BASE_OBJECT_UR_ADD_SP_COMMON('ajkim','김애진','ajkim','hSQGbuuWWNA+BgawNwMa2w==',2,'ajkim',28,0,0,10,11,10,0,'Y','Y','2016-06-01','','L','','free2313@naver.com','','3163','ko','김애진[]/과장/팀원','C','2016-06-01 12:59:04.457','','','','','N','','','',' ','{"mailconfig":{"APPROVAL":"MAIL;","APPROVECANCEL":"","ABORT":"","COMPLETE":"MAIL;","WITHDRAW":"","REJECT":"MAIL;","CIRCULATION":"","CCINFO":""}}',' ','','','','','','',' ',' ','N',@Return);
+		try{
+			setMap();
+			BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\yjlee\\Documents\\base_object_ur.txt"));
+			
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs;
+			
+			conn = ConnectionFactoryMS.getDatabaseConnection();
+			
+			String query = "SELECT * FROM COVI_SMART..BASE_OBJECT_UR; ";
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	//procedure 실행으로 대체
+	        	String insQuery ="call BASE_OBJECT_UR_ADD_SP_COMMON(";
+	        	insQuery +="'"+rs.getString("UR_Code")+"'";
+	        	insQuery +=",'"+rs.getString("DisplayName")+"'";
+	        	insQuery +=",'"+rs.getString("LogonID")+"'";
+	        	insQuery +=",'"+rs.getString("LogonPW")+"'";
+	        	insQuery +=",2";
+	        	insQuery +=",'"+rs.getString("EmpNo")+"'";
+	        	
+	        	if(Dept.get(rs.getString("GR_Code"))!=null){
+	        		insQuery +=","+Dept.get(rs.getString("GR_Code"));
+	        	}else{
+	        		insQuery +=",0";
+	        	}
+	        	
+	        	if(region.get(rs.getString("RegionCode"))!=null){
+	        		insQuery +=","+region.get(rs.getString("RegionCode"));
+	        	}else{
+	        		insQuery +=",0";
+	        	}
+	        	
+	        	insQuery +=",0"; //approvalID
+	        	
+	        	if(jobPosition.get(rs.getString("JobPositionCode"))!=null){
+	        		insQuery +=","+jobPosition.get(rs.getString("JobPositionCode"));
+	        	}else{
+	        		insQuery +=",0";
+	        	}
+	        	
+	        	if(jobTitle.get(rs.getString("JobTitleCode"))!=null){
+	        		insQuery +=","+jobTitle.get(rs.getString("JobTitleCode"));
+	        	}else{
+	        		insQuery +=",0";
+	        	}
+	        	
+	        	if(jobLevel.get(rs.getString("JobLevelCode"))!=null){
+	        		insQuery +=","+jobLevel.get(rs.getString("JobLevelCode"));
+	        	}else{
+	        		insQuery +=",0";
+	        	}
+	        	
+	        	insQuery +=",0"; //DeputyID
+	        	
+	        	insQuery +=",'"+rs.getString("IsUse")+"'";
+	        	insQuery +=",'"+rs.getString("IsDisplay")+"'";
+	        	insQuery +=",'"+rs.getString("EnterDate")+"'";
+	        	insQuery +=",'"+rs.getString("RetireDate")+"'";
+	        	insQuery +=",'"+rs.getString("BirthDiv")+"'";
+	        	insQuery +=",'"+rs.getString("BirthDate")+"'";
+	        	insQuery +=",'"+rs.getString("ExternalMailAddress")+"'";
+	        	insQuery +=",'"+rs.getString("ChargeBusiness")+"'";
+	        	insQuery +=",'"+rs.getString("PhoneNumberInter")+"'";
+	        	insQuery +=",'"+rs.getString("LanguageCode")+"'";
+	        	insQuery +=",'"+rs.getString("Description")+"'";
+	        	insQuery +=",'C'"; //DataStatus
+	        	//insQuery +=",'"+rs.getString("RegistDate")+"'";//RegistDate
+	        	insQuery +=",'"+rs.getString("DeputyCode")+"'";
+	        	insQuery +=",'"+rs.getString("DeputyName")+"'";
+	        	insQuery +=",'"+rs.getString("DeputyFromDate")+"'";
+	        	insQuery +=",'"+rs.getString("DeputyToDate")+"'";
+	        	insQuery +=",'"+rs.getString("Deputy_YN")+"'";
+	        	insQuery +=",'"+rs.getString("AbsentReason")+"'";
+	        	
+	        	insQuery +=",'"+rs.getString("ApprovalCode")+"'";
+	        	insQuery +=",''"; //ApprovalName
+	        	insQuery +=",'"+rs.getString("ApprovalArrival_YN")+"'";
+	        	insQuery +=",'"+XML.toJSONObject(rs.getString("ApprovalArrivalMedium"))+"'";
+	        	insQuery +=",'"+rs.getString("ApprovalComplete_YN")+"'";
+	        	insQuery +=",'"+rs.getString("ApprovalCompleteMedium")+"'";
+	        	insQuery +=",'"+rs.getString("ApprovalUnitCode")+"'";
+	        	insQuery +=",'"+rs.getString("ReceiptUnitCode")+"'";
+	        	insQuery +=",'"+rs.getString("ApprovalFullCode")+"'";
+	        	insQuery +=",'"+rs.getString("ApprovalFullName")+"'";
+	        	insQuery +=",'"+rs.getString("ApprovalPassword")+"'";
+	        	insQuery +=",'"+rs.getString("ApprovalTempListView")+"'";
+	        	insQuery +=",'"+rs.getString("ApprovalMessageBoxView")+"'";
+	        	insQuery +=",'"+rs.getString("ApprovalMobileUse_YN")+"'";
+	        	insQuery +=",@Return);";
+	        	
+	        	writer.write(insQuery);
+	        	writer.newLine();
+	        	System.out.println(insQuery);
+        	}
+	     
+	        ps.close();
+			conn.close();
+			writer.close();		
+			
+		} catch(Exception ex){
+			ex.printStackTrace();
+		}
+		
+	}
+	
+	
+	public void setMap(){
+		setDeptMap();
+		setJobLevelMap();
+		setJobTitleMap();
+		setJobPositionMap();
+		setRegionMap();
+	}
+	
+	public void setDeptMap(){
+		Map<String, Integer> tempDept = new HashMap<String, Integer>();		
+		
+		try{
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs;
+			
+			conn = ConnectionFactoryMaria.getDatabaseConnection();
+			
+			String query = "SELECT * FROM covi_smart4j.common_dept; ";
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	tempDept.put(rs.getString("DEPT_Code"), rs.getInt("DEPT_ID"));
+	        }
+	        ps.close();
+			conn.close();
+			
+			this.Dept = tempDept;
+		} catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+	
+	public void setJobTitleMap(){
+		Map<String, Integer> tempJobTitle = new HashMap<String, Integer>();		
+		
+		try{
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs;
+			
+			conn = ConnectionFactoryMaria.getDatabaseConnection();
+			
+			String query = "SELECT * FROM covi_smart4j.common_jobtitle; ";
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	tempJobTitle.put(rs.getString("JobTitleCode"), rs.getInt("JobTitleID"));
+	        }
+	        ps.close();
+			conn.close();
+			
+			this.jobTitle = tempJobTitle;
+		} catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+	
+	public void setJobLevelMap(){
+		Map<String, Integer> tempJobLevel = new HashMap<String, Integer>();		
+		
+		try{
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs;
+			
+			conn = ConnectionFactoryMaria.getDatabaseConnection();
+			
+			String query = "SELECT *FROM covi_smart4j.common_joblevel;";
+			
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	tempJobLevel.put(rs.getString("JobLevelCode"), rs.getInt("JobLevelID"));
+	        }
+	        ps.close();
+			conn.close();
+			
+			this.jobLevel = tempJobLevel;
+		} catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+	
+	
+	public void setJobPositionMap(){
+		Map<String, Integer> tempJobPosition = new HashMap<String, Integer>();		
+		
+		try{
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs;
+			
+			conn = ConnectionFactoryMaria.getDatabaseConnection();
+			
+			String query = "SELECT *FROM covi_smart4j.common_jobposition;";
+			
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	tempJobPosition.put(rs.getString("JobPositionCode"), rs.getInt("JobPositionID"));
+	        }
+	        ps.close();
+			conn.close();
+			
+			this.jobPosition = tempJobPosition;
+		} catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+	
+	public void setRegionMap(){
+		Map<String, Integer> tempRegion = new HashMap<String, Integer>();		
+		
+		try{
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet rs;
+			
+			conn = ConnectionFactoryMaria.getDatabaseConnection();
+			
+			String query = "SELECT *FROM covi_smart4j.common_region;";
+			
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			
+	        while ( rs.next() ) {
+	        	tempRegion.put(rs.getString("REGION_Code"), rs.getInt("REGION_ID"));
+	        }
+	        
+	        ps.close();
+			conn.close();
+			
+			this.region = tempRegion;
+		} catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+	
+}

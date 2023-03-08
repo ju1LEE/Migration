@@ -1,0 +1,16 @@
+package egovframework.covision.coviflow.migration;
+
+public class Main {
+
+	public static void main(String[] args) {
+		DataMigrationMain migration = new DataMigrationMain();
+		try {
+			migration.executeDataMigration();
+			System.out.println("마이그레이션 완료");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}

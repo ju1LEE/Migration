@@ -1,0 +1,90 @@
+package egovframework.covision.coviflow.vacation;
+
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.XML;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import egovframework.covision.coviflow.vacation.InsertNewData;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+public class DataMigrationMain {
+	
+	private InsertNewData newDataSvc;
+	private JSONArray UseagePlanArr = new JSONArray();
+	private JSONArray FormHistoryArr = new JSONArray();
+	
+	public void executeDataMigration() throws Exception {
+		newDataSvc = new InsertNewData();
+		
+		UseagePlanArr = newDataSvc.selectUseagePlan();
+		
+		for(Object obj : UseagePlanArr){
+			JSONObject useagePlan = (JSONObject) obj;
+			
+			useagePlan.put("VACPLAN", changeXMLtoJSON(useagePlan.getString("VACPLAN"), useagePlan.getString("YEAR"), useagePlan.getString("UR_CODE")).toString());
+			
+			newDataSvc.insertUseagePlan(useagePlan);
+		}
+	}
+	
+	public JSONObject changeXMLtoJSON(String xmlStr,  String year, String urCode){
+		JSONObject returnObj = new JSONObject();
+		
+		returnObj.put("urCode", urCode);
+		returnObj.put("year", year);
+		
+		xmlStr = "<root>" + xmlStr + "</root>";
+		try {
+			JSONArray months = new JSONArray();
+			JSONObject monthObj = new JSONObject();
+			
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
+	        DocumentBuilder builder;  
+	        builder = factory.newDocumentBuilder();  
+	        Document document = builder.parse( new InputSource( new StringReader( xmlStr ) ) );
+			
+	        XPath xpath = XPathFactory.newInstance().newXPath();
+			
+	        NodeList cols1 = (NodeList)xpath.evaluate("//TblVacPlan/VAC_MONTH", document, XPathConstants.NODESET);
+	        NodeList cols2 = (NodeList)xpath.evaluate("//TblVacPlan/VAC_SDT", document, XPathConstants.NODESET);
+	        NodeList cols3 = (NodeList)xpath.evaluate("//TblVacPlan/VAC_EDT", document, XPathConstants.NODESET);
+	        
+	        for(int i = 0; i<cols1.getLength(); i++){
+	        	JSONObject vacPlan = new JSONObject();
+	        	
+	        	String month = cols1.item(i).getTextContent();
+	 	        String sdate = cols2.item(i).getTextContent();
+	 	        String edate = cols3.item(i).getTextContent();
+	 	        
+	 	       vacPlan.put("startDate", sdate.replaceAll("-", "."));
+	 	       vacPlan.put("endDate", edate.replaceAll("-", "."));
+	 	        
+	 	       monthObj.put("month", month);
+	 	       monthObj.put("vacPlan", vacPlan);
+	 	       
+	 	      months.add(monthObj);
+	        }
+			returnObj.put("months", months);
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+		return returnObj;
+	}
+}
